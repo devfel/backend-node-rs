@@ -1,11 +1,39 @@
 const express = require("express");
-const { uuid } = require("uuidv4");
+const { uuid, isUuid } = require("uuidv4");
 
 const app = express();
 
 app.use(express.json());
 
 const projects = [];
+
+//Middleware to print information about the routes requests.
+function logRequests(request, response, next) {
+  const { method, url } = request;
+
+  const logLabel = `[${method.toUpperCase()}] ${url}`;
+
+  console.time(logLabel);
+  next();
+  console.timeEnd(logLabel);
+}
+
+//Middleware to validate the ID before executing a route
+function validateProjectId(request, response, next) {
+  const { id } = request.params;
+
+  // if ID is not a valid one.
+  if (!isUuid(id)) {
+    return response.status(400).json({ error: "Project ID not valid." });
+  }
+  // if ID is valid, use nexto to go on with the route.
+  else {
+    return next();
+  }
+}
+
+app.use(logRequests);
+app.use("/projects/:id", validateProjectId);
 
 // READ ROUTE (with or without filters)
 app.get("/projects", (request, response) => {
