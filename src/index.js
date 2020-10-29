@@ -1,63 +1,77 @@
-const express = require('express');
+const express = require("express");
+const { uuid } = require("uuidv4");
 
 const app = express();
 
 app.use(express.json());
 
-app.get('/projects', (request, response) => {
-    // Query Params
-    // without destructuring 
-    // const query = request.query;
-    // console.log(query); //output example: { title: 'React', owner: 'Diego' }
-    const {title, owner} = request.query;
-    console.log(title);
-    console.log(owner);
-    
-    return response.json([
-        'Projeto 1',    
-        'Projeto 2'
-    ]);
+const projects = [];
+
+// READ ROUTE (with or without filters)
+app.get("/projects", (request, response) => {
+  const { title } = request.query;
+
+  const results = title
+    ? projects.filter((project) => project.title.includes(title)) //all projects that includes the query word in the title
+    : projects; //replace results with all the projects if title is null. (aka no filter applied).
+
+  return response.json(results);
 });
 
-app.post('/projects', (request, response) => {
-    // Request Body
-    // Not destructured
-    //const body = request.body;
-    //console.log(body); //output example: { title: 'Aplicativo React', owner: 'Luiz Felizardo' }
-    const {title, owner} = request.body;
-    // REMINDER: return undefined, if not set to JSON with app.use(express.json());.
-    console.log(title);
-    console.log(owner);
-    
-    return response.json([
-        'Projeto 1',    
-        'Projeto 2',
-        'Projeto 3'
-    ]);
+// CREATE ROUTE
+app.post("/projects", (request, response) => {
+  const { title, owner } = request.body;
+  const project = { id: uuid(), title, owner };
+
+  projects.push(project);
+
+  return response.json(project);
 });
 
-app.put('/projects/:id', (request, response) => {
-    // Route Params
-    // No destructuring 
-    // const params = request.params;
-    // console.log(params); //output example: { id: '1' }
-    const {id} = request.params;
-    console.log(id);
-    
-    return response.json([
-        'Projeto 4',    
-        'Projeto 2',
-        'Projeto 3'
-    ]);
+// UPDATE ROUTE
+app.put("/projects/:id", (request, response) => {
+  const { id } = request.params;
+  const { title, owner } = request.body;
+  const projectIndex = projects.findIndex((elem) => elem.id === id);
+
+  // if project does not exists.
+  if (projectIndex < 0) {
+    return response.status(400).json({ error: "Project not found." });
+  }
+
+  // if project was found.
+  else {
+    // creating project with the new information to replace the old one.
+    const project = {
+      id,
+      title,
+      owner,
+    };
+
+    projects[projectIndex] = project;
+    return response.json(project);
+  }
 });
 
-app.delete('/projects/:id', (request, response) => {
-    return response.json([
-        'Projeto 2',
-        'Projeto 3'
-    ]);
+// DELETE ROUTE
+app.delete("/projects/:id", (request, response) => {
+  const { id } = request.params;
+  const projectIndex = projects.findIndex((elem) => elem.id === id);
+
+  // if project does not exists.
+  if (projectIndex < 0) {
+    return response.status(400).json({ error: "Project not found." });
+  }
+
+  // if project was found.
+  else {
+    // remove the project index using the array splice method.
+    projects.splice(projectIndex, 1);
+    // return 204 status for the no content success response.
+    return response.status(204).send();
+  }
 });
 
 app.listen(3333, () => {
-    console.log('Back-end started!')
+  console.log("Back-end started!");
 });
