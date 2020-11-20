@@ -1,4 +1,2 @@
 # express-test
-Testing express with nodeJS in an application.
-
-More info will be added soon.
+Testing and learning about express with nodeJS in an application.
